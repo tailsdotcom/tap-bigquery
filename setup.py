@@ -30,7 +30,8 @@ setup(
     install_requires=[
         "attrs==19.3.0",
         "backoff==1.8.0",
-        "getschema>=0.1.2",
+        #"getschema>=0.1.2",
+        "getschema@git+ssh://git@github.com/tailsdotcom/getschema#egg=getschema",
         "google-cloud-bigquery==1.16.0",
         "requests>=2.20.0",
         "simplejson==3.11.1",
