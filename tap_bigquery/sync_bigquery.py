@@ -181,6 +181,8 @@ def do_sync(config, state, stream):
     properties = stream.schema.properties
     last_update = start_datetime
 
+    LOGGER.info("Properties:\n    %s" % properties)
+
     LOGGER.info("Running query:\n    %s" % query)
 
     extract_tstamp = datetime.datetime.utcnow()
@@ -229,7 +231,11 @@ def do_sync(config, state, stream):
             if EXTRACT_TIMESTAMP in properties.keys():
                 record[EXTRACT_TIMESTAMP] = extract_tstamp.isoformat()
 
-            singer.write_record(stream.stream, record)
+            try:
+                singer.write_record(stream.stream, record)
+            except TypeError as err:
+                LOGGER.error("Problematic Record:\n    %s" % record)
+                raise err
 
             last_update = record[keys["datetime_key"]]
             counter.increment()
