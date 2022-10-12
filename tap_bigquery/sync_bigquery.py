@@ -140,6 +140,19 @@ def do_discover(config, stream, output_schema_file=None,
     return stream_metadata, key_properties, catalog
 
 
+def _convert_datetime(val):
+    if type(val) == str:
+        r = dateutil.parser.parse(val)
+    elif type(val) == datetime.date:
+        r = datetime.datetime(
+            year=val.year,
+            month=val.month,
+            day=val.day)
+    elif type(val) == datetime.datetime:
+        r = val
+    return r.isoformat()
+
+
 def do_sync(config, state, stream):
     singer.set_currently_syncing(state, stream.tap_stream_id)
     singer.write_state(state)
@@ -207,16 +220,13 @@ def do_sync(config, state, stream):
                     else:
                         record[key] = None
                 elif prop.format == "date-time":
-                    if type(row[key]) == str:
-                        r = dateutil.parser.parse(row[key])
-                    elif type(row[key]) == datetime.date:
-                        r = datetime.datetime(
-                            year=row[key].year,
-                            month=row[key].month,
-                            day=row[key].day)
-                    elif type(row[key]) == datetime.datetime:
-                        r = row[key]
-                    record[key] = r.isoformat()
+                    record[key] = _convert_datetime(row[key])
+                elif prop.type[1] == "object":
+                    record[key] = row[key]
+                    for subkey in prop.properties.keys():
+                        subprop = prop.properties[subkey]
+                        if subprop.format == "date-time":
+                            record[key][subkey] = _convert_datetime(row[key][subkey])
                 elif prop.type[1] == "string":
                     record[key] = str(row[key])
                 elif prop.type[1] == "number":
